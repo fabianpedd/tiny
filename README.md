@@ -1,5 +1,7 @@
 # MLPerf™ Tiny Deep Learning Benchmarks for Embedded Devices
 
+**Please see the [`tinyml-benchmarks`](tinyml-benchmarks/) directory for more info on how to use this fork!**
+
 The goal of MLPerf Tiny is to provide a representative set of deep neural nets
 and benchmarking code to compare performance between embedded devices. Embedded
 devices include microcontrollers, DSPs, and tiny NN accelerators.  These devices

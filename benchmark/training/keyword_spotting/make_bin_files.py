@@ -13,14 +13,14 @@ if __name__ == '__main__':
 
   num_test_files = Flags.num_bin_files
   test_file_path = Flags.bin_file_path
-  
+
   print(f"Extracting {num_test_files} to {test_file_path}")
   word_labels = ["Down", "Go", "Left", "No", "Off", "On", "Right",
                  "Stop", "Up", "Yes", "Silence", "Unknown"]
 
   num_labels = len(word_labels)
   ds_train, ds_test, ds_val = kws_data.get_training_data(Flags, val_cal_subset=True)
-  
+
   if Flags.target_set[0:3].lower() == 'val':
     eval_data = ds_val
     print("Evaluating on the validation set")
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     eval_data = ds_test
     print("Evaluating on the test set")
   elif Flags.target_set[0:5].lower() == 'train':
-    eval_data = ds_train    
+    eval_data = ds_train
     print("Evaluating on the training set")
 
   model_settings = models.prepare_model_settings(num_labels, Flags)
@@ -58,14 +58,14 @@ if __name__ == '__main__':
     all_dat   = np.zeros(input_shape, dtype='float32')
 
     # collect all the calibration data
-    for dat, label in ds_val.as_numpy_iterator(): 
+    for dat, label in ds_val.as_numpy_iterator():
       all_dat = np.concatenate((all_dat, dat))
 
     input_scale = 1.0*(np.max(all_dat) - np.min(all_dat)) / 255.0
     input_zero_point = (np.max(all_dat)+np.min(all_dat))/(2*input_scale)
 
     orig_min = np.min(all_dat)
-    orig_max = np.max(all_dat)    
+    orig_max = np.max(all_dat)
     input_scale = 1.0 / 255.0  # LFBEs are clipped to [0.0,1.0] in feature extraction
     input_zero_point = 0.0
     # quantizing as:  quantized_value = int(original_value/input_scale + input_zero_point)
@@ -77,23 +77,23 @@ if __name__ == '__main__':
     quant_min, quant_max = -2.0**15, 2.0**15-1
     input_scale = 1.0/2**15
     input_zero_point = 0.0
-    
+
   print(f"Scale factor = {input_scale}, zero point = {input_zero_point}")
   output_data = []
-  labels = []  
+  labels = []
   file_names = []
   count = 0
 
   # set true to run the TFL model on each input before writing it to files.
   # This will also generate a file tflm_labels.csv (similar to y_labels.csv)
   # recording what the model predicted for each input
-  test_tfl_on_bin_files = False
+  test_tfl_on_bin_files = True
 
   all_dat   = np.zeros(input_shape, dtype='float32')
   all_dat_q   = np.zeros(input_shape, dtype=output_type)
-  
+
   # make the target directory and all directories above it if it doesn't exist
-  os.makedirs(test_file_path, exist_ok = True) 
+  os.makedirs(test_file_path, exist_ok = True)
 
   eval_data = eval_data.unbatch().batch(1).take(num_test_files).as_numpy_iterator()
   for dat, label in eval_data:
@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
   print(f"FP32      feature data ranges from {np.min(all_dat)  } to {np.max(all_dat)  } with mean = {np.mean(all_dat)}")
   print(f"Quantized feature data ranges from {np.min(all_dat_q)} to {np.max(all_dat_q)} with mean = {np.mean(all_dat_q)}")
-    
+
   with open(os.path.join(test_file_path, "y_labels.csv"), "w") as fpo_true_labels:
     for (fname, lbl) in zip(file_names, labels):
       fpo_true_labels.write(f"{fname}, {num_labels}, {lbl}\n")
@@ -136,4 +136,3 @@ if __name__ == '__main__':
   axes[1].hist(all_dat.flatten(),bins=20);
   axes[2].hist(all_dat_q.flatten(),bins=20);
   plt.savefig(f"test_data_quantization_{Flags.feature_type}.png")
-
